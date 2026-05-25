@@ -11,7 +11,30 @@
   --color-accent-green: #22c55e;
   --color-accent-orange: #f97316;
 
+  /* Mobile App Specific Colors from LinguistAI Design */
+  --color-m-background: #0f131e;
+  --color-m-surface: #0f131e;
+  --color-m-on-surface: #dfe2f2;
+  --color-m-surface-variant: #313441;
+  --color-m-on-surface-variant: #cbc3d7;
+  --color-m-primary: #d0bcff;
+  --color-m-primary-container: #a078ff;
+  --color-m-on-primary-container: #340080;
+  --color-m-secondary: #4cd7f6;
+  --color-m-secondary-container: #03b5d3;
+  --color-m-tertiary: #8fdb00;
+  --color-m-surface-container-low: #171b27;
+  --color-m-surface-container-highest: #313441;
+
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Segoe UI', Roboto;
+  --font-display-lg: 'Inter', sans-serif;
+  --font-body-lg: 'Inter', sans-serif;
+  --font-label-sm: 'Geist', sans-serif;
+  --font-body-md: 'Inter', sans-serif;
+  --font-headline-md: 'Inter', sans-serif;
+  --font-headline-lg: 'Inter', sans-serif;
+  --font-label-md: 'Geist', sans-serif;
+  --font-headline-lg-mobile: 'Inter', sans-serif;
 }
 
 @layer base {
@@ -67,5 +90,30 @@
   }
   .dark .text-gradient {
     background-image: linear-gradient(to right, #818cf8, #c084fc);
+  }
+
+  /* Mobile App Specific Utilities from LinguistAI Design */
+  .tap-highlight-transparent {
+    -webkit-tap-highlight-color: transparent;
+  }
+  .glass-card-m {
+    background: rgba(22, 27, 42, 0.7);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  }
+  .neon-glow-purple {
+    box-shadow: 0 0 15px rgba(208, 188, 255, 0.2);
+  }
+  .light-leak {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(0.98); }
+  }
+  .ai-pulse {
+    animation: pulse-slow 3s infinite ease-in-out;
   }
 }

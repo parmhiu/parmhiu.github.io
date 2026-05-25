@@ -29,46 +29,46 @@ const Dashboard = () => {
       </section>
 
       {/* Stats row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div className="glass-card rounded-2xl p-6 flex items-center gap-4 group hover:-translate-y-1 transition-transform">
-          <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-500 flex items-center justify-center">
-            <TrendingUp className="w-6 h-6" />
+      <div className="grid grid-cols-3 gap-2 md:gap-6 mb-10">
+        <div className="glass-card rounded-xl md:rounded-2xl p-3 md:p-6 flex flex-col md:flex-row items-center justify-center text-center md:text-left gap-2 md:gap-4 group hover:-translate-y-1 transition-transform">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-500 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-5 h-5 md:w-6 md:h-6" />
           </div>
-          <div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Daily Streak</p>
-            <p className="text-2xl font-bold">12 Days</p>
+          <div className="flex flex-col">
+            <p className="text-[10px] md:text-sm text-slate-500 dark:text-slate-400 font-medium leading-tight">Streak</p>
+            <p className="text-sm md:text-2xl font-bold mt-0.5">12<span className="hidden md:inline"> Days</span></p>
           </div>
         </div>
         
-        <div className="glass-card rounded-2xl p-6 flex items-center gap-4 group hover:-translate-y-1 transition-transform">
-          <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-500 flex items-center justify-center">
-            <BarChart3 className="w-6 h-6" />
+        <div className="glass-card rounded-xl md:rounded-2xl p-3 md:p-6 flex flex-col md:flex-row items-center justify-center text-center md:text-left gap-2 md:gap-4 group hover:-translate-y-1 transition-transform">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-500 flex items-center justify-center shrink-0">
+            <BarChart3 className="w-5 h-5 md:w-6 md:h-6" />
           </div>
-          <div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Avg Pronunciation</p>
-            <p className="text-2xl font-bold">85%</p>
+          <div className="flex flex-col">
+            <p className="text-[10px] md:text-sm text-slate-500 dark:text-slate-400 font-medium leading-tight">Score</p>
+            <p className="text-sm md:text-2xl font-bold mt-0.5">85%</p>
           </div>
         </div>
 
-        <div className="glass-card rounded-2xl p-6 flex items-center gap-4 group hover:-translate-y-1 transition-transform">
-          <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-500 flex items-center justify-center">
-            <BookOpen className="w-6 h-6" />
+        <div className="glass-card rounded-xl md:rounded-2xl p-3 md:p-6 flex flex-col md:flex-row items-center justify-center text-center md:text-left gap-2 md:gap-4 group hover:-translate-y-1 transition-transform">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-500 flex items-center justify-center shrink-0">
+            <BookOpen className="w-5 h-5 md:w-6 md:h-6" />
           </div>
-          <div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Words Learned</p>
-            <p className="text-2xl font-bold">2,405</p>
+          <div className="flex flex-col">
+            <p className="text-[10px] md:text-sm text-slate-500 dark:text-slate-400 font-medium leading-tight">Words</p>
+            <p className="text-sm md:text-2xl font-bold mt-0.5">2.4k</p>
           </div>
         </div>
       </div>
 
       {/* Quick Access */}
-      <h2 className="text-2xl font-bold mb-6">Quick Access</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+      <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Quick Access</h2>
+      <div className="grid grid-cols-3 gap-3 md:gap-6 mb-10">
         {[
           { title: "Shadowing", icon: Play, color: "bg-indigo-500", path: "/speaking" },
-          { title: "Mock Dialogue", icon: MessageCircle, color: "bg-purple-500", path: "/speaking/mock-dialogue" },
-          { title: "IELTS Speaking", icon: Mic2, color: "bg-cyan-500", path: "/speaking" },
-          { title: "Writing Email", icon: Edit3, color: "bg-orange-500", path: "/writing" },
+          { title: "Mock Dialogue", short: "Dialogue", icon: MessageCircle, color: "bg-purple-500", path: "/speaking/mock-dialogue" },
+          { title: "IELTS Speaking", short: "IELTS", icon: Mic2, color: "bg-cyan-500", path: "/speaking" },
+          { title: "Writing Email", short: "Email", icon: Edit3, color: "bg-orange-500", path: "/writing" },
           { title: "Listening", icon: Headphones, color: "bg-blue-500", path: "/listening" },
           { title: "Reading", icon: BookOpen, color: "bg-emerald-500", path: "/reading" }
         ].map((item, i) => (
@@ -76,17 +76,20 @@ const Dashboard = () => {
             key={i}
             onClick={() => navigate(item.path)}
             className={cn(
-              "rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-4 hover:-translate-y-1 transition-all group",
+              "rounded-xl md:rounded-2xl p-3 md:p-6 flex flex-col items-center justify-start md:justify-center text-center gap-2 md:gap-4 hover:-translate-y-1 transition-all group",
               "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700",
               (item.title === "Listening" || item.title === "Reading" || item.title === "Writing Email") 
                 ? "shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(99,102,241,0.2)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] border-indigo-100 dark:border-indigo-900/50" 
                 : "shadow-sm hover:shadow-md"
             )}
           >
-            <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg", item.color, "group-hover:scale-110 transition-transform")}>
-              <item.icon className="w-7 h-7" />
+            <div className={cn("w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-md md:shadow-lg shrink-0", item.color, "group-hover:scale-110 transition-transform")}>
+              <item.icon className="w-5 h-5 md:w-7 md:h-7" />
             </div>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">{item.title}</span>
+            <span className="font-semibold text-[11px] md:text-base text-slate-800 dark:text-slate-200 leading-tight">
+              <span className="md:hidden">{item.short || item.title}</span>
+              <span className="hidden md:inline">{item.title}</span>
+            </span>
           </button>
         ))}
       </div>

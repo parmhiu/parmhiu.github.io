@@ -100,12 +100,12 @@ const SpeakingList = () => {
           <p className="text-slate-500 dark:text-slate-400">Gemini AI is crafting new practice materials.</p>
         </div>
       ) : practices.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2  xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-6">
           {practices.map((practice) => (
-            <div key={practice.id} className="glass-card dark:bg-gray-800 rounded-2xl shadow p-6 group hover:shadow-xl transition-all border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800 flex flex-col">
-              <div className="flex justify-between items-start mb-4">
+            <div key={practice.id} className="glass-card dark:bg-gray-800 rounded-xl md:rounded-2xl shadow p-3 md:p-6 group hover:shadow-xl transition-all border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800 flex flex-col">
+              <div className="flex flex-col xl:flex-row justify-between items-start mb-2 md:mb-4 gap-2 xl:gap-0">
                 <span className={cn(
-                  "px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider",
+                  "px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-md text-[10px] md:text-xs font-bold uppercase tracking-wider",
                   practice.level === 'Easy' ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
                     practice.level === 'Medium' ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
                       "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
@@ -113,22 +113,22 @@ const SpeakingList = () => {
                   {practice.level}
                 </span>
                 <div className="flex gap-2">
-                  <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs px-2 py-1 rounded-md font-medium">{practice.type}</span>
+                  <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-md font-medium line-clamp-1">{practice.type}</span>
                 </div>
               </div>
 
-              <h3 className="text-xl font-bold mb-4 line-clamp-2 leading-snug">{practice.title}</h3>
+              <h3 className="text-sm md:text-xl font-bold mb-2 md:mb-4 line-clamp-2 leading-snug">{practice.title}</h3>
 
-              <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mb-6 mt-auto">
-                <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {practice.duration}</span>
-                <span className="flex items-center gap-1.5"><BarChart className="w-4 h-4" /> {practice.focus || activeFocus}</span>
+              <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-4 text-[10px] md:text-sm text-slate-500 dark:text-slate-400 mb-4 md:mb-6 mt-auto">
+                <span className="flex items-center gap-1 md:gap-1.5"><Clock className="w-3 h-3 md:w-4 md:h-4 shrink-0" /> {practice.duration}</span>
+                <span className="flex items-center gap-1 md:gap-1.5"><BarChart className="w-3 h-3 md:w-4 md:h-4 shrink-0" /> <span className="line-clamp-1">{practice.focus || activeFocus}</span></span>
               </div>
 
               <button
                 onClick={() => navigate('/speaking/record', { state: { practice } })}
-                className="w-full flex items-center justify-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 py-3 rounded-xl font-semibold transition-colors mt-auto"
+                className="w-full flex items-center justify-center gap-1.5 md:gap-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 py-2.5 md:py-3 rounded-lg md:rounded-xl text-xs md:text-base font-semibold transition-colors mt-auto"
               >
-                <Play className="w-4 h-4 fill-current" /> Start Practice
+                <Play className="w-3 h-3 md:w-4 md:h-4 fill-current shrink-0" /> <span className="hidden md:inline">Start Practice</span><span className="md:hidden">Start</span>
               </button>
             </div>
           ))}
