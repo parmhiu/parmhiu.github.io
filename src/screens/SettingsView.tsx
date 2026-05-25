@@ -22,19 +22,19 @@ const SettingsView = () => {
 
   return (
     <div className="animate-in fade-in duration-500 max-w-4xl mx-auto pb-10">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Settings</h1>
-        <p className="text-slate-500 dark:text-slate-400">Manage your preferences and API connections.</p>
+      <div className="mb-6 md:mb-8 px-4 md:px-8">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Settings</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">Manage your preferences and API connections.</p>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6 md:space-y-8">
 
 
         {/* AI Models */}
-        <section className="glass-card rounded-3xl p-8">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><BrainCircuit className="w-5 h-5 text-indigo-500" /> AI Provider & Models</h2>
+        <section className="glass-card rounded-2xl md:rounded-3xl p-4 md:p-8">
+          <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-6 flex items-center gap-2"><BrainCircuit className="w-5 h-5 text-indigo-500" /> AI Provider & Models</h2>
           
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             <div>
               <label className="block text-sm font-semibold mb-2 text-slate-700 dark:text-slate-300">AI Provider</label>
               <select 
@@ -46,7 +46,8 @@ const SettingsView = () => {
                   if (newProvider === 'openai') setTextModel('gpt-4o-mini');
                   if (newProvider === 'deepseek') setTextModel('deepseek-v4-flash');
                 }}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-medium"
+                style={{ backgroundPosition: 'right 1rem center' }}
+                className="w-full bg-slate-50 dark:bg-slate-900 focus:bg-slate-50 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 pr-10 outline-none focus:border-indigo-500 transition-all font-medium"
               >
                 <option value="gemini">Google Gemini</option>
                 <option value="openai">OpenAI (ChatGPT)</option>
@@ -68,7 +69,7 @@ const SettingsView = () => {
                     placeholder="AIzaSy..."
                     value={geminiKey}
                     onChange={(e) => setGeminiKey(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
+                    className="w-full bg-slate-50 dark:bg-slate-900 focus:bg-slate-50 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono text-sm md:text-base"
                   />
                   <button
                     type="button"
@@ -95,7 +96,7 @@ const SettingsView = () => {
                     placeholder="sk-..."
                     value={openAiKey}
                     onChange={(e) => setOpenAiKey(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
+                    className="w-full bg-slate-50 dark:bg-slate-900 focus:bg-slate-50 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono text-sm md:text-base"
                   />
                   <button
                     type="button"
@@ -122,7 +123,7 @@ const SettingsView = () => {
                     placeholder="sk-..."
                     value={deepseekKey}
                     onChange={(e) => setDeepseekKey(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
+                    className="w-full bg-slate-50 dark:bg-slate-900 focus:bg-slate-50 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono text-sm md:text-base"
                   />
                   <button
                     type="button"
@@ -140,7 +141,8 @@ const SettingsView = () => {
               <select 
                 value={textModel}
                 onChange={(e) => setTextModel(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all"
+                style={{ backgroundPosition: 'right 1rem center' }}
+                className="w-full bg-slate-50 dark:bg-slate-900 focus:bg-slate-50 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 pr-10 outline-none focus:border-indigo-500 transition-all text-sm md:text-base"
               >
                 {aiProvider === 'gemini' && (
                   <>
@@ -170,17 +172,17 @@ const SettingsView = () => {
         </section>
 
         {/* Audio API */}
-        <section className="glass-card rounded-3xl p-8">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><AudioLines className="w-5 h-5 text-indigo-500" /> Local Audio API</h2>
+        <section className="glass-card rounded-2xl md:rounded-3xl p-4 md:p-8">
+          <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-6 flex items-center gap-2"><AudioLines className="w-5 h-5 text-indigo-500" /> Local Audio API</h2>
           
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             <div>
               <label className="block text-sm font-semibold mb-2 text-slate-700 dark:text-slate-300">Whisper / TTS Local URL</label>
               <input 
                 type="text" 
                 placeholder="http://localhost:8080"
                 defaultValue="http://127.0.0.1:8000"
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
+                className="w-full bg-slate-50 dark:bg-slate-900 focus:bg-slate-50 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono text-sm md:text-base"
               />
             </div>
 
@@ -189,17 +191,17 @@ const SettingsView = () => {
                  <p className="font-semibold text-sm">Save audio recordings locally</p>
                  <p className="text-xs text-slate-500">Keep history of your speaking practice.</p>
                </div>
-               <div className="w-12 h-6 bg-indigo-500 rounded-full relative cursor-pointer">
+               <div className="w-12 h-6 bg-indigo-500 rounded-full relative cursor-pointer shrink-0 ml-4">
                  <div className="w-4 h-4 bg-white rounded-full absolute right-1 top-1 shadow-sm"></div>
                </div>
             </div>
           </div>
         </section>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end px-4 md:px-8">
            <button 
              onClick={() => toast.success('Settings saved successfully!')}
-             className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all hover:scale-105"
+             className="w-full md:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all hover:scale-105"
            >
              <Save className="w-5 h-5" /> Save Changes
            </button>
