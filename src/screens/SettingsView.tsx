@@ -1,5 +1,5 @@
 import React from 'react';
-import { Moon, Sun, Monitor, Save, AudioLines, BrainCircuit } from 'lucide-react';
+import { Moon, Sun, Monitor, Save, AudioLines, BrainCircuit, Eye, EyeOff } from 'lucide-react';
 import { useTheme } from '../components/ThemeContext';
 import { useSettings } from '../components/SettingsContext';
 import { useToast } from '../components/ToastContext';
@@ -15,6 +15,10 @@ const SettingsView = () => {
     deepseekKey, setDeepseekKey, 
     textModel, setTextModel 
   } = useSettings();
+
+  const [showGeminiKey, setShowGeminiKey] = React.useState(false);
+  const [showOpenAiKey, setShowOpenAiKey] = React.useState(false);
+  const [showDeepseekKey, setShowDeepseekKey] = React.useState(false);
 
   return (
     <div className="animate-in fade-in duration-500 max-w-4xl mx-auto pb-10">
@@ -58,13 +62,22 @@ const SettingsView = () => {
                     (Get your API key here)
                   </a>
                 </label>
-                <input 
-                  type="password" 
-                  placeholder="AIzaSy..."
-                  value={geminiKey}
-                  onChange={(e) => setGeminiKey(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
-                />
+                <div className="relative">
+                  <input 
+                    type={showGeminiKey ? "text" : "password"} 
+                    placeholder="AIzaSy..."
+                    value={geminiKey}
+                    onChange={(e) => setGeminiKey(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGeminiKey(!showGeminiKey)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  >
+                    {showGeminiKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -76,13 +89,22 @@ const SettingsView = () => {
                     (Get your API key here)
                   </a>
                 </label>
-                <input 
-                  type="password" 
-                  placeholder="sk-..."
-                  value={openAiKey}
-                  onChange={(e) => setOpenAiKey(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
-                />
+                <div className="relative">
+                  <input 
+                    type={showOpenAiKey ? "text" : "password"} 
+                    placeholder="sk-..."
+                    value={openAiKey}
+                    onChange={(e) => setOpenAiKey(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOpenAiKey(!showOpenAiKey)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  >
+                    {showOpenAiKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -94,13 +116,22 @@ const SettingsView = () => {
                     (Get your API key here)
                   </a>
                 </label>
-                <input 
-                  type="password" 
-                  placeholder="sk-..."
-                  value={deepseekKey}
-                  onChange={(e) => setDeepseekKey(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
-                />
+                <div className="relative">
+                  <input 
+                    type={showDeepseekKey ? "text" : "password"} 
+                    placeholder="sk-..."
+                    value={deepseekKey}
+                    onChange={(e) => setDeepseekKey(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDeepseekKey(!showDeepseekKey)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  >
+                    {showDeepseekKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
             )}
 
