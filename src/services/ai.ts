@@ -94,14 +94,25 @@ const callAI = async (settings: AppSettings, systemInstruction: string, userCont
 };
 
 export const evaluateWriting = async (settings: AppSettings, prompt: string, text: string): Promise<WritingFeedback> => {
-  const systemInstruction = `You are an expert IELTS/TOEIC English writing coach. Evaluate the user's text based on the given prompt.
+  const exam = settings.primaryExam;
+  const scaleInstruction = exam === 'TOEIC'
+    ? `Target exam: TOEIC Writing.
+Use TOEIC Speaking/Writing style scoring. The overall "score" is 0-100 for the app UI.
+The "bandScore" field must be a TOEIC scaled writing score string from 0-200, for example "160/200". Do not return IELTS bands.
+Sub-score fields should be TOEIC-style 0-100 strings, for example "82/100".`
+    : `Target exam: IELTS Writing.
+Use IELTS band scoring. The overall "score" is 0-100 for the app UI.
+The "bandScore" field must be an IELTS band string from 0-9, for example "7.5".`;
+
+  const systemInstruction = `You are an expert ${exam} English writing coach. Evaluate the user's text based on the given prompt.
+${scaleInstruction}
 Return your evaluation strictly as a JSON object matching this schema:
 {
   "score": number (0-100 overall score),
-  "bandScore": string (e.g. "7.5"),
+  "bandScore": string (${exam === 'TOEIC' ? 'TOEIC scaled score, e.g. "160/200"' : 'IELTS band, e.g. "7.5"'}),
   "overallFeedback": "string (Short overall feedback on the article)",
   "subScores": {
-    "taskAchievement": string (e.g. "7.5"),
+    "taskAchievement": string (${exam === 'TOEIC' ? 'e.g. "82/100"' : 'e.g. "7.5"'}),
     "coherence": string,
     "lexicalResource": string,
     "grammar": string
@@ -109,7 +120,7 @@ Return your evaluation strictly as a JSON object matching this schema:
   "corrections": [
     { "original": "string", "replacement": "string", "explanation": "string (briefly explain why it was added, modified, or deleted)" }
   ],
-  "improvementTips": ["string (Suggestions for improvement based on the target band score)"],
+  "improvementTips": ["string (Suggestions for improvement based on the target ${exam === 'TOEIC' ? 'TOEIC score' : 'band score'})"],
   "improvedText": "string (a natural, high-scoring rewrite of the user's text)"
 }`;
 
@@ -145,20 +156,24 @@ export const evaluateShadowing = async (
 Compare the user's recognized text against the target text and return STRICT JSON matching this schema:
 {
   "finalScore": number (0-100 overall shadowing score),
-  "pronunciationScore": number (0-100, lower if many words were mis-recognized),
-  "completenessScore": number (0-100, percentage of target words that appeared),
+  "pronunciationScore": number (0-100, based on word-by-word matches; give partial credit for close-sounding words),
+  "completenessScore": number (0-100, percentage of target words that were attempted or appeared),
   "fluencyScore": number (0-100, smoothness — penalize if user said far fewer words than target for the duration),
   "rhythmScore": number (0-100, natural English rhythm/timing — estimate from word coverage and length),
   "intonationScore": number (0-100, pitch variation — estimate similarly),
   "feedback": "string (1-2 concise sentences with the SINGLE most important actionable advice — mention specific words or sounds when possible)"
 }
 
-Scoring guidelines (be honest, not lenient):
+Scoring guidelines:
+- Score word by word. Do not fail the whole sentence because of one wrong or missing word.
+- A single wrong word in an otherwise correct sentence should usually stay around 80-90, depending on sentence length.
+- Close-sounding substitutions should receive partial credit, not zero.
+- Preserve credit for correct words before and after an error.
 - 90+ : near-perfect, almost all words correct, smooth
-- 75-89: good attempt, a few minor word errors
-- 60-74: partial — missed several words or mispronounced enough to confuse STT
-- 40-59: weak — missed half or more
-- < 40 : barely intelligible
+- 75-89: good attempt, a few word-level errors
+- 60-74: partial — several missed or unclear words, but the sentence is still recognizable
+- 40-59: weak — about half the target words are missing or unclear
+- < 40 : barely intelligible or mostly unrelated
 - If recognized text is empty or just 1-2 words for a long target: all scores below 25, finalScore around 0-15
 - If recognized text is completely off-topic from target: low pronunciation/completeness, feedback should note it`;
 
@@ -174,7 +189,9 @@ Scoring guidelines (be honest, not lenient):
 };
 
 export const evaluateSpeaking = async (settings: AppSettings, transcript: string, recognizedText: string): Promise<SpeakingFeedback> => {
-  const systemInstruction = `You are an expert English speaking coach. Evaluate the user's spoken text (which was transcribed via Speech-to-Text) against the target text they were supposed to say.
+  const exam = settings.primaryExam;
+  const systemInstruction = `You are an expert ${exam} English speaking coach. Evaluate the user's spoken text (which was transcribed via Speech-to-Text) against the target text they were supposed to say.
+Target exam: ${exam}. Use ${exam === 'TOEIC' ? 'TOEIC Speaking style criteria and do not mention IELTS bands.' : 'IELTS Speaking style criteria and band-oriented feedback.'}
 Return your evaluation strictly as a JSON object matching this schema:
 {
   "score": number (0-100 overall score),
@@ -259,7 +276,9 @@ export const evaluatePictureDescription = async (
   imageTitle: string,
   userDescription: string
 ): Promise<PictureDescriptionFeedback> => {
-  const systemInstruction = `You are an expert TOEIC/IELTS English speaking coach specializing in picture description tasks.
+  const exam = settings.primaryExam;
+  const systemInstruction = `You are an expert ${exam} English speaking coach specializing in picture description tasks.
+Target exam: ${exam}. Use ${exam === 'TOEIC' ? 'TOEIC picture-description scoring criteria. Do not mention IELTS bands or "Band 7+".' : 'IELTS-style descriptive speaking criteria.'}
 The user was shown a picture titled/depicting: "${imageTitle}".
 They described it verbally and their speech was transcribed via Speech-to-Text.
 
@@ -273,7 +292,7 @@ Evaluate their description and return STRICT JSON matching this schema:
   "feedback": "string (2-3 sentences of overall feedback)",
   "keyElementsMissed": ["string (key visual elements they should have mentioned but didn't)"],
   "improvementTips": ["string (specific actionable tips to improve picture description skills)"],
-  "sampleDescription": "string (a model Band 7+ description of this picture, 3-5 sentences)"
+  "sampleDescription": "string (a model ${exam === 'TOEIC' ? 'high-scoring TOEIC' : 'Band 7+'} description of this picture, 3-5 sentences)"
 }
 
 Scoring guidelines:

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../components/classNames';
 import type { PictureDescriptionFeedback } from '../services/ai';
+import { useSettings } from '../components/useSettings';
 
 const ScoreRing = ({
   score,
@@ -65,11 +66,14 @@ const ScoreRing = ({
 const PictureDescriptionResult = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { result, recognizedText, practice } = (location.state || {}) as {
+  const settings = useSettings();
+  const { result, recognizedText, practice, exam } = (location.state || {}) as {
     result?: PictureDescriptionFeedback;
     recognizedText?: string;
     practice?: { id: number; title: string; imageUrl: string; level: string; category: string };
+    exam?: 'TOEIC' | 'IELTS';
   };
+  const activeExam = exam || settings.primaryExam;
 
   if (!result) {
     return (
@@ -115,11 +119,11 @@ const PictureDescriptionResult = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* Picture reference */}
           {practice?.imageUrl && (
-            <div className="rounded-2xl overflow-hidden shadow-md">
+            <div className="rounded-2xl overflow-hidden shadow-md bg-slate-100 dark:bg-slate-800">
               <img
                 src={practice.imageUrl}
                 alt={practice.title}
-                className="w-full h-48 md:h-56 object-cover"
+                className="w-full aspect-video max-h-72 object-contain"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
@@ -142,7 +146,7 @@ const PictureDescriptionResult = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-3xl p-6 shadow-sm space-y-4">
             <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-indigo-500" />
-              Model Answer (Band 7+)
+              {activeExam === 'TOEIC' ? 'Model Answer (High-scoring TOEIC)' : 'Model Answer (Band 7+)'}
             </h3>
             <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
               {result.sampleDescription}
@@ -202,7 +206,7 @@ const PictureDescriptionResult = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-3xl p-6 shadow-sm space-y-3">
             <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <Target className="w-5 h-5 text-purple-500" />
-              TOEIC Tips
+              {activeExam} Tips
             </h3>
             <ul className="text-sm text-slate-600 dark:text-slate-300 space-y-2">
               <li className="flex items-start gap-2">

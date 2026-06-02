@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Mic, RotateCcw, Check, Activity, Image, ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '../components/classNames';
@@ -7,6 +7,9 @@ import { evaluatePictureDescription } from '../services/ai';
 import { addHistory } from '../services/storage';
 import { useToast } from '../components/useToast';
 import { createSpeechRecognition, type SpeechRecognition } from '../services/speechRecognition';
+import { VoiceReaderControls } from '../features/voice-reader/VoiceReaderControls';
+import { splitVoiceReaderText } from '../features/voice-reader/voiceReaderText';
+import { useVoiceReader } from '../features/voice-reader/useVoiceReader';
 
 const PictureDescriptionPractice = () => {
   const navigate = useNavigate();
@@ -26,7 +29,11 @@ const PictureDescriptionPractice = () => {
   const [recognizedText, setRecognizedText] = useState('');
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [didAutoRead, setDidAutoRead] = useState(false);
   const recognitionRef = React.useRef<SpeechRecognition | null>(null);
+  const promptText = `Describe everything you see in this picture. ${practice.title}`;
+  const voiceSegments = useMemo(() => splitVoiceReaderText(promptText), [promptText]);
+  const voiceReader = useVoiceReader({ exerciseId: `picture-${practice.id ?? practice.title}` });
 
   useEffect(() => {
     const recognition = createSpeechRecognition();
@@ -54,6 +61,16 @@ const PictureDescriptionPractice = () => {
     }
   }, [showError]);
 
+  useEffect(() => {
+    setDidAutoRead(false);
+  }, [practice.id, practice.title]);
+
+  useEffect(() => {
+    if (didAutoRead || voiceSegments.length === 0) return;
+    voiceReader.speakSegments(voiceSegments, { mode: 'sequence' });
+    setDidAutoRead(true);
+  }, [didAutoRead, voiceReader, voiceSegments]);
+
   const toggleRecording = () => {
     if (isRecording) {
       recognitionRef.current?.stop();
@@ -78,7 +95,7 @@ const PictureDescriptionPractice = () => {
         focus: 'Picture Description',
       });
       showSuccess('Evaluation completed!');
-      navigate('/speaking/picture/result', { state: { result, recognizedText, practice } });
+      navigate('/speaking/picture/result', { state: { result, recognizedText, practice, exam: settings.primaryExam } });
     } catch (e) {
       console.error(e);
       showError('Failed to evaluate description.');
@@ -126,7 +143,7 @@ const PictureDescriptionPractice = () => {
       <div className="mb-6 shrink-0">
         <div className="relative rounded-3xl overflow-hidden shadow-lg bg-slate-100 dark:bg-slate-800">
           {imgError || !practice.imageUrl ? (
-            <div className="w-full h-64 md:h-80 flex flex-col items-center justify-center gap-3">
+            <div className="w-full aspect-video max-h-[26rem] flex flex-col items-center justify-center gap-3">
               <Image className="w-16 h-16 text-slate-300 dark:text-slate-600" />
               <p className="text-slate-400 text-sm">Image not available</p>
             </div>
@@ -134,14 +151,39 @@ const PictureDescriptionPractice = () => {
             <img
               src={practice.imageUrl}
               alt={practice.title}
-              className="w-full h-64 md:h-80 object-cover"
+              className="w-full aspect-video max-h-[26rem] object-contain"
               onError={() => setImgError(true)}
             />
           )}
         </div>
-        <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-3 font-medium">
-          Describe everything you see in this picture
-        </p>
+        <div className="mt-3 flex flex-col items-center gap-3">
+          <p className="text-center text-sm text-slate-500 dark:text-slate-400 font-medium">
+            {voiceSegments.map((segment) => (
+              <span
+                key={segment.id}
+                className={cn(
+                  'rounded-md transition-colors',
+                  voiceReader.activeSegmentId === segment.id && 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-200'
+                )}
+              >
+                {segment.text}{' '}
+              </span>
+            ))}
+          </p>
+          <VoiceReaderControls
+            supported={voiceReader.supported}
+            globallyEnabled={voiceReader.globalVoiceReaderEnabled}
+            muted={voiceReader.isTemporarilyMuted}
+            onChange={voiceReader.setTemporarilyMuted}
+            status={voiceReader.status}
+            canPlay={voiceReader.canPlayAudio}
+            onPlay={() => voiceReader.speakSegments(voiceSegments, { mode: 'sequence' })}
+            onPause={voiceReader.pause}
+            onResume={voiceReader.resume}
+            onReplay={() => voiceReader.speakSegments(voiceSegments, { mode: 'sequence' })}
+            onStop={voiceReader.stop}
+          />
+        </div>
       </div>
 
       {/* Live Audio Feedback */}

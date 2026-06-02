@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UploadCloud, Captions, Sparkles, Link2, Type, AlignLeft, Pilcrow, FileVideo, X, ChevronDown, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, UploadCloud, Captions, Sparkles, Link2, Type, AlignLeft, Pilcrow, FileVideo, X, AlertTriangle } from 'lucide-react';
 import { cn } from '../../../components/classNames';
+import { Select } from '../../../components/Select';
 import { useToast } from '../../../components/useToast';
 import { StepProgress } from '../components/StepProgress';
 import { PrivacyBadge } from '../components/PrivacyBadge';
@@ -249,7 +250,7 @@ export default function AddVideoShadowingPage() {
           <button
             disabled={!canGenerate}
             onClick={handleGenerate}
-            className="mt-2 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 transition"
+            className="mt-2 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30 disabled:cursor-not-allowed hover:brightness-110 transition"
           >
             <Sparkles className="w-5 h-5" /> {busy || importing ? 'Đang xử lý…' : 'Generate Shadow Lesson'}
           </button>
@@ -264,16 +265,9 @@ function SelectField({ label, value, options, onChange }: { label: string; value
   return (
     <div>
       <label className="block text-sm font-semibold mb-2 text-slate-700 dark:text-slate-200">{label}</label>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium outline-none focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-500/40 pr-10"
-        >
-          {options.map((o) => <option key={o} value={o}>{o}</option>)}
-        </select>
-        <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-      </div>
+      <Select value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </Select>
     </div>
   );
 }
