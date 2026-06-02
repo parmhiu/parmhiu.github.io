@@ -1,30 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { SettingsContext, type AIProvider, type PrimaryExam } from './settings-context';
 
-export type AIProvider = 'gemini' | 'openai' | 'deepseek';
-
-export interface AppSettings {
-  aiProvider: AIProvider;
-  geminiKey: string;
-  openAiKey: string;
-  deepseekKey: string;
-  textModel: string;
-}
-
-interface SettingsContextType extends AppSettings {
-  setAiProvider: (provider: AIProvider) => void;
-  setGeminiKey: (key: string) => void;
-  setOpenAiKey: (key: string) => void;
-  setDeepseekKey: (key: string) => void;
-  setTextModel: (model: string) => void;
-}
-
-const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+export type { AIProvider, AppSettings, PrimaryExam } from './settings-context';
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   // Migrate existing apiKey to geminiKey if needed
   const legacyKey = localStorage.getItem('apiKey') || '';
   
   const [aiProvider, setAiProvider] = useState<AIProvider>((localStorage.getItem('aiProvider') as AIProvider) || 'gemini');
+  const [primaryExam, setPrimaryExam] = useState<PrimaryExam>((localStorage.getItem('primaryExam') as PrimaryExam) || 'IELTS');
   const [geminiKey, setGeminiKey] = useState(localStorage.getItem('geminiKey') || legacyKey);
   const [openAiKey, setOpenAiKey] = useState(localStorage.getItem('openAiKey') || '');
   const [deepseekKey, setDeepseekKey] = useState(localStorage.getItem('deepseekKey') || '');
@@ -32,15 +16,17 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem('aiProvider', aiProvider);
+    localStorage.setItem('primaryExam', primaryExam);
     localStorage.setItem('geminiKey', geminiKey);
     localStorage.setItem('openAiKey', openAiKey);
     localStorage.setItem('deepseekKey', deepseekKey);
     localStorage.setItem('textModel', textModel);
-  }, [aiProvider, geminiKey, openAiKey, deepseekKey, textModel]);
+  }, [aiProvider, primaryExam, geminiKey, openAiKey, deepseekKey, textModel]);
 
   return (
     <SettingsContext.Provider value={{ 
       aiProvider, setAiProvider,
+      primaryExam, setPrimaryExam,
       geminiKey, setGeminiKey,
       openAiKey, setOpenAiKey,
       deepseekKey, setDeepseekKey,
@@ -50,9 +36,3 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     </SettingsContext.Provider>
   );
 }
-
-export const useSettings = () => {
-  const context = useContext(SettingsContext);
-  if (context === undefined) throw new Error('useSettings must be used within a SettingsProvider');
-  return context;
-};

@@ -1,89 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Mic, RotateCcw, Check, Volume2, Activity } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { cn } from '../components/Sidebar';
-import { useSettings } from '../components/SettingsContext';
+import { cn } from '../components/classNames';
+import { useSettings } from '../components/useSettings';
 import { evaluateSpeaking, generateSpeakingTranscript } from '../services/ai';
 import { addHistory } from '../services/storage';
-import { useToast } from '../components/ToastContext';
+import { useToast } from '../components/useToast';
+import { useSpeechRecognition } from '../services/useSpeechRecognition';
 
 const SpeakingRecording = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const settings = useSettings();
-  const toast = useToast();
+  const { error: showError, success: showSuccess } = useToast();
   const practice = location.state?.practice || { title: "General Practice", level: "Medium", type: "Paragraph" };
+  const exam = (location.state?.exam as string) || '';
+  const taskLabel = (location.state?.taskLabel as string) || 'Speaking';
   
-  const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [recognizedText, setRecognizedText] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
-  const recognitionRef = React.useRef<any>(null);
+
+  const speech = useSpeechRecognition();
+  const recognizedText = speech.transcript + (speech.interimTranscript ? ' ' + speech.interimTranscript : '');
+
+  useEffect(() => {
+    if (!speech.isSupported) {
+      showError("Speech Recognition is not supported in this browser.");
+    }
+  }, [speech.isSupported, showError]);
 
   useEffect(() => {
     const generateTranscript = async () => {
       try {
         const text = await generateSpeakingTranscript(settings, practice.title, practice.level, practice.type);
         setTranscript(text);
-      } catch (e) {
+      } catch {
         setTranscript("We anticipate a significant increase in quarterly revenue due to the new marketing campaign.");
-        toast.error("Failed to generate transcript via AI.");
+        showError("Failed to generate transcript via AI.");
       } finally {
         setIsLoading(false);
       }
     };
     generateTranscript();
-
-    // Initialize SpeechRecognition
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-
-      let finalTrans = '';
-      recognition.onresult = (event: any) => {
-        let interimTrans = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTrans += event.results[i][0].transcript + ' ';
-          } else {
-            interimTrans += event.results[i][0].transcript;
-          }
-        }
-        setRecognizedText(finalTrans + interimTrans);
-      };
-      
-      recognitionRef.current = recognition;
-    } else {
-      toast.error("Speech Recognition is not supported in this browser.");
-    }
-  }, [practice.title, settings, practice.level, practice.type]);
+  }, [practice.title, settings, practice.level, practice.type, showError]);
 
   const toggleRecording = () => {
-    if (isRecording) {
-      recognitionRef.current?.stop();
-      setIsRecording(false);
+    if (speech.isListening) {
+      speech.stop();
     } else {
-      setRecognizedText("");
-      recognitionRef.current?.start();
-      setIsRecording(true);
+      speech.start();
     }
   };
 
   const handleEvaluate = async () => {
-    if (isRecording) recognitionRef.current?.stop();
+    if (speech.isListening) speech.stop();
     setIsEvaluating(true);
     try {
       const result = await evaluateSpeaking(settings, transcript, recognizedText);
       addHistory({ title: practice.title, type: practice.type, score: result.score, focus: 'Speaking' });
-      toast.success("Evaluation completed!");
+      showSuccess("Evaluation completed!");
       navigate('/speaking/result', { state: { result, recognizedText, transcript, practice } });
     } catch (e) {
       console.error(e);
-      toast.error("Failed to evaluate speaking.");
+      showError("Failed to evaluate speaking.");
     } finally {
       setIsEvaluating(false);
     }
@@ -92,12 +72,20 @@ const SpeakingRecording = () => {
   return (
     <div className="max-w-4xl mx-auto h-[calc(100vh-8rem)] flex flex-col animate-in slide-in-from-bottom-8 duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 shrink-0">
-        <button onClick={() => navigate(-1)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white">
-          ← Back
+      <div className="flex items-center justify-between mb-6 shrink-0">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white font-medium">
+          ← Exit
         </button>
         <div className="flex gap-2 items-center">
-          <span className="px-3 py-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-full text-sm font-semibold">Pronunciation</span>
+          {exam && (
+            <span className={cn(
+              'px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider',
+              exam === 'TOEIC' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400'
+            )}>
+              {exam}
+            </span>
+          )}
+          <span className="px-3 py-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-full text-sm font-semibold">{taskLabel}</span>
         </div>
       </div>
 
@@ -111,7 +99,7 @@ const SpeakingRecording = () => {
               if (e.currentTarget.src.includes('loremflickr')) {
                 e.currentTarget.src = `https://picsum.photos/seed/${practice.id}/800/450`;
               } else {
-                toast.error("Lỗi tải ảnh, vui lòng kiểm tra lại link ảnh!");
+                showError("Lỗi tải ảnh, vui lòng kiểm tra lại link ảnh!");
               }
             }}
           />
@@ -138,7 +126,7 @@ const SpeakingRecording = () => {
 
         {/* Live Audio Feedback */}
         <div className="h-24 flex items-center justify-center w-full">
-          {isRecording ? (
+          {speech.isListening ? (
             <div className="flex items-center gap-1">
               {[1, 2, 3, 4, 5, 4, 3, 2, 5, 3, 1].map((h, i) => (
                 <div 
@@ -159,7 +147,7 @@ const SpeakingRecording = () => {
         <div className="w-full max-w-2xl text-center min-h-[60px]">
           {recognizedText ? (
              <p className="text-xl text-slate-600 dark:text-slate-300 italic">"{recognizedText}"</p>
-          ) : isRecording ? (
+          ) : speech.isListening ? (
              <p className="text-lg text-slate-400 italic">Listening...</p>
           ) : (
              <p className="text-lg text-transparent">Placeholder</p>
@@ -178,22 +166,22 @@ const SpeakingRecording = () => {
           disabled={isEvaluating}
           className={cn(
             "w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl relative group",
-            isRecording 
+            speech.isListening 
               ? "bg-indigo-600 dark:bg-indigo-500 shadow-indigo-500/50 scale-110" 
               : "bg-white dark:bg-slate-800 border-2 border-indigo-100 dark:border-indigo-900 shadow-indigo-500/10 hover:scale-105",
             isEvaluating && "opacity-50 cursor-not-allowed"
           )}
         >
-          {isRecording && <div className="absolute inset-0 rounded-full border-4 border-indigo-500 animate-ping opacity-75"></div>}
-          <Mic className={cn("w-10 h-10", isRecording ? "text-white animate-pulse" : "text-indigo-500 dark:text-indigo-400")} />
+          {speech.isListening && <div className="absolute inset-0 rounded-full border-4 border-indigo-500 animate-ping opacity-75"></div>}
+          <Mic className={cn("w-10 h-10", speech.isListening ? "text-white animate-pulse" : "text-indigo-500 dark:text-indigo-400")} />
         </button>
 
         <button 
           onClick={handleEvaluate}
-          disabled={(!recognizedText && !isRecording) || isEvaluating}
+          disabled={(!recognizedText && !speech.isListening) || isEvaluating}
           className={cn(
             "w-14 h-14 rounded-full flex items-center justify-center text-white transition-all shadow-lg",
-            recognizedText || isRecording ? "bg-green-500 hover:bg-green-600 hover:scale-110 shadow-green-500/30" : "bg-slate-300 dark:bg-slate-700 cursor-not-allowed"
+            recognizedText || speech.isListening ? "bg-green-500 hover:bg-green-600 hover:scale-110 shadow-green-500/30" : "bg-slate-300 dark:bg-slate-700 cursor-not-allowed"
           )}
         >
           {isEvaluating ? (
@@ -204,7 +192,7 @@ const SpeakingRecording = () => {
         </button>
       </div>
       <p className="text-center text-sm font-medium text-slate-400 mt-6 pb-4">
-        {isEvaluating ? "Evaluating your speaking..." : isRecording ? "Click to Stop" : "Click to Record"}
+        {isEvaluating ? "Evaluating your speaking..." : speech.isListening ? "Click to Stop" : "Click to Record"}
       </p>
     </div>
   );

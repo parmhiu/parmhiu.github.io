@@ -1,53 +1,118 @@
-import React from 'react';
-import { Moon, Sun, Monitor, Save, AudioLines, BrainCircuit, Eye, EyeOff } from 'lucide-react';
-import { useTheme } from '../components/ThemeContext';
-import { useSettings } from '../components/SettingsContext';
-import { useToast } from '../components/ToastContext';
-import { cn } from '../components/Sidebar';
+import { Save, AudioLines, BrainCircuit, Sun, Moon, Monitor, Target } from 'lucide-react';
+import { useSettings } from '../components/useSettings';
+import { useToast } from '../components/useToast';
+import { useTheme } from '../components/useTheme';
+import { cn } from '../components/classNames';
+import type { AIProvider, PrimaryExam } from '../components/settings-context';
 
 const SettingsView = () => {
   const toast = useToast();
   const { theme, setTheme } = useTheme();
-  const { 
-    aiProvider, setAiProvider, 
-    geminiKey, setGeminiKey, 
-    openAiKey, setOpenAiKey, 
-    deepseekKey, setDeepseekKey, 
-    textModel, setTextModel 
+  const {
+    aiProvider, setAiProvider,
+    primaryExam, setPrimaryExam,
+    geminiKey, setGeminiKey,
+    openAiKey, setOpenAiKey,
+    deepseekKey, setDeepseekKey,
+    textModel, setTextModel
   } = useSettings();
-
-  const [showGeminiKey, setShowGeminiKey] = React.useState(false);
-  const [showOpenAiKey, setShowOpenAiKey] = React.useState(false);
-  const [showDeepseekKey, setShowDeepseekKey] = React.useState(false);
 
   return (
     <div className="animate-in fade-in duration-500 max-w-4xl mx-auto pb-10">
-      <div className="mb-6 md:mb-8 px-4 md:px-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">Settings</h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">Manage your preferences and API connections.</p>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Settings</h1>
+        <p className="text-slate-500 dark:text-slate-400">Manage your preferences and API connections.</p>
       </div>
 
-      <div className="space-y-6 md:space-y-8">
+      <div className="space-y-8">
+        {/* Learning target */}
+        <section className="glass-card rounded-3xl p-8">
+          <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
+            <Target className="w-5 h-5 text-indigo-500" /> Learning Target
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+            Speaking and Writing use this exam format across the app.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {([
+              { value: 'IELTS' as const, title: 'IELTS', sub: 'Band 0-9 · Speaking parts 1-3 · Writing tasks 1-2', accent: 'cyan' },
+              { value: 'TOEIC' as const, title: 'TOEIC', sub: 'Speaking 11 questions · Writing 8 questions', accent: 'blue' },
+            ]).map((opt) => {
+              const active = primaryExam === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => setPrimaryExam(opt.value as PrimaryExam)}
+                  className={cn(
+                    'text-left rounded-2xl border p-5 transition-all',
+                    active
+                      ? 'bg-white dark:bg-slate-800 border-indigo-300 dark:border-indigo-700 ring-2 ring-indigo-500/20 shadow-lg shadow-indigo-500/10'
+                      : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <span className={cn(
+                      'px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider',
+                      opt.accent === 'cyan'
+                        ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400'
+                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    )}>
+                      {opt.title}
+                    </span>
+                    {active && <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">Active</span>}
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{opt.sub}</p>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
+        {/* Theme */}
+        <section className="glass-card rounded-3xl p-8">
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+            {theme === 'dark' ? <Moon className="w-5 h-5 text-indigo-500" /> : <Sun className="w-5 h-5 text-indigo-500" />} Appearance
+          </h2>
+          <div className="flex gap-3">
+            {([
+              { value: 'light' as const, icon: Sun, label: 'Light' },
+              { value: 'dark' as const, icon: Moon, label: 'Dark' },
+              { value: 'system' as const, icon: Monitor, label: 'System' },
+            ]).map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setTheme(opt.value)}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all",
+                  theme === opt.value
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                )}
+              >
+                <opt.icon className="w-4 h-4" />
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </section>
 
         {/* AI Models */}
-        <section className="glass-card rounded-2xl md:rounded-3xl p-4 md:p-8">
-          <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-6 flex items-center gap-2"><BrainCircuit className="w-5 h-5 text-indigo-500" /> AI Provider & Models</h2>
+        <section className="glass-card rounded-3xl p-8">
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><BrainCircuit className="w-5 h-5 text-indigo-500" /> AI Provider & Models</h2>
           
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-6">
             <div>
               <label className="block text-sm font-semibold mb-2 text-slate-700 dark:text-slate-300">AI Provider</label>
               <select 
                 value={aiProvider}
                 onChange={(e) => {
-                  const newProvider = e.target.value as any;
+                  const newProvider = e.target.value as AIProvider;
                   setAiProvider(newProvider);
                   if (newProvider === 'gemini') setTextModel('gemini-2.0-flash');
                   if (newProvider === 'openai') setTextModel('gpt-4o-mini');
                   if (newProvider === 'deepseek') setTextModel('deepseek-v4-flash');
                 }}
-                style={{ backgroundPosition: 'right 1rem center' }}
-                className="w-full bg-slate-50 dark:bg-slate-900 focus:bg-slate-50 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 pr-10 outline-none focus:border-indigo-500 transition-all font-medium"
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-medium"
               >
                 <option value="gemini">Google Gemini</option>
                 <option value="openai">OpenAI (ChatGPT)</option>
@@ -63,22 +128,13 @@ const SettingsView = () => {
                     (Get your API key here)
                   </a>
                 </label>
-                <div className="relative">
-                  <input 
-                    type={showGeminiKey ? "text" : "password"} 
-                    placeholder="AIzaSy..."
-                    value={geminiKey}
-                    onChange={(e) => setGeminiKey(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 focus:bg-slate-50 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono text-sm md:text-base"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowGeminiKey(!showGeminiKey)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                  >
-                    {showGeminiKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
+                <input 
+                  type="password" 
+                  placeholder="AIzaSy..."
+                  value={geminiKey}
+                  onChange={(e) => setGeminiKey(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
+                />
               </div>
             )}
 
@@ -90,22 +146,13 @@ const SettingsView = () => {
                     (Get your API key here)
                   </a>
                 </label>
-                <div className="relative">
-                  <input 
-                    type={showOpenAiKey ? "text" : "password"} 
-                    placeholder="sk-..."
-                    value={openAiKey}
-                    onChange={(e) => setOpenAiKey(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 focus:bg-slate-50 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono text-sm md:text-base"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowOpenAiKey(!showOpenAiKey)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                  >
-                    {showOpenAiKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
+                <input 
+                  type="password" 
+                  placeholder="sk-..."
+                  value={openAiKey}
+                  onChange={(e) => setOpenAiKey(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
+                />
               </div>
             )}
 
@@ -117,22 +164,13 @@ const SettingsView = () => {
                     (Get your API key here)
                   </a>
                 </label>
-                <div className="relative">
-                  <input 
-                    type={showDeepseekKey ? "text" : "password"} 
-                    placeholder="sk-..."
-                    value={deepseekKey}
-                    onChange={(e) => setDeepseekKey(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 focus:bg-slate-50 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono text-sm md:text-base"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowDeepseekKey(!showDeepseekKey)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                  >
-                    {showDeepseekKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
+                <input 
+                  type="password" 
+                  placeholder="sk-..."
+                  value={deepseekKey}
+                  onChange={(e) => setDeepseekKey(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
+                />
               </div>
             )}
 
@@ -141,8 +179,7 @@ const SettingsView = () => {
               <select 
                 value={textModel}
                 onChange={(e) => setTextModel(e.target.value)}
-                style={{ backgroundPosition: 'right 1rem center' }}
-                className="w-full bg-slate-50 dark:bg-slate-900 focus:bg-slate-50 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 pr-10 outline-none focus:border-indigo-500 transition-all text-sm md:text-base"
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all"
               >
                 {aiProvider === 'gemini' && (
                   <>
@@ -172,17 +209,17 @@ const SettingsView = () => {
         </section>
 
         {/* Audio API */}
-        <section className="glass-card rounded-2xl md:rounded-3xl p-4 md:p-8">
-          <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-6 flex items-center gap-2"><AudioLines className="w-5 h-5 text-indigo-500" /> Local Audio API</h2>
+        <section className="glass-card rounded-3xl p-8">
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><AudioLines className="w-5 h-5 text-indigo-500" /> Local Audio API</h2>
           
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-6">
             <div>
               <label className="block text-sm font-semibold mb-2 text-slate-700 dark:text-slate-300">Whisper / TTS Local URL</label>
               <input 
                 type="text" 
                 placeholder="http://localhost:8080"
                 defaultValue="http://127.0.0.1:8000"
-                className="w-full bg-slate-50 dark:bg-slate-900 focus:bg-slate-50 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono text-sm md:text-base"
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
               />
             </div>
 
@@ -191,17 +228,17 @@ const SettingsView = () => {
                  <p className="font-semibold text-sm">Save audio recordings locally</p>
                  <p className="text-xs text-slate-500">Keep history of your speaking practice.</p>
                </div>
-               <div className="w-12 h-6 bg-indigo-500 rounded-full relative cursor-pointer shrink-0 ml-4">
+               <div className="w-12 h-6 bg-indigo-500 rounded-full relative cursor-pointer">
                  <div className="w-4 h-4 bg-white rounded-full absolute right-1 top-1 shadow-sm"></div>
                </div>
             </div>
           </div>
         </section>
 
-        <div className="flex justify-end px-4 md:px-8">
+        <div className="flex justify-end">
            <button 
              onClick={() => toast.success('Settings saved successfully!')}
-             className="w-full md:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all hover:scale-105"
+             className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all hover:scale-105"
            >
              <Save className="w-5 h-5" /> Save Changes
            </button>
