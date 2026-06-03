@@ -93,35 +93,95 @@ const callAI = async (settings: AppSettings, systemInstruction: string, userCont
   }
 };
 
-export const evaluateWriting = async (settings: AppSettings, prompt: string, text: string): Promise<WritingFeedback> => {
-  const exam = settings.primaryExam;
-  const scaleInstruction = exam === 'TOEIC'
-    ? `Target exam: TOEIC Writing.
+const buildScoringInstruction = (exam: string, taskKey: string, prompt: string): string => {
+  if (exam === 'TOEIC') {
+    return `Target exam: TOEIC Writing.
 Use TOEIC Speaking/Writing style scoring. The overall "score" is 0-100 for the app UI.
 The "bandScore" field must be a TOEIC scaled writing score string from 0-200, for example "160/200". Do not return IELTS bands.
-Sub-score fields should be TOEIC-style 0-100 strings, for example "82/100".`
-    : `Target exam: IELTS Writing.
-Use IELTS band scoring. The overall "score" is 0-100 for the app UI.
-The "bandScore" field must be an IELTS band string from 0-9, for example "7.5".`;
+Sub-score fields should be TOEIC-style 0-100 strings, for example "82/100".`;
+  }
 
-  const systemInstruction = `You are an expert ${exam} English writing coach. Evaluate the user's text based on the given prompt.
-${scaleInstruction}
+  const base = `Target exam: IELTS Writing.
+Use IELTS band scoring (0–9). The overall "score" is 0-100 for the app UI.
+The "bandScore" field must be an IELTS band string, for example "6.5". Sub-score fields must also be IELTS band strings, for example "6.0".`;
+
+  if (taskKey === 't1a') {
+    return `${base}
+Task type: IELTS Academic Writing Task 1 (visual data — chart, graph, table, map, or process diagram).
+Minimum word count: 150 words. Deduct at least one band from taskAchievement if under 150 words.
+Scoring for taskAchievement (Task Achievement):
+  - MUST include a clear overview sentence summarising the most significant trend or feature. No overview = maximum band 5.
+  - MUST select and accurately report the most relevant data — not every single number.
+  - MUST make meaningful comparisons between categories, time periods, or groups.
+  - Personal opinions, arguments, or unsupported conclusions beyond the data should NOT be rewarded.
+Scoring for lexicalResource: reward accurate use of trend language (rose steadily, peaked at, fluctuated, remained stable, etc.).`;
+  }
+
+  if (taskKey === 't1g') {
+    const lower = prompt.toLowerCase();
+    let registerType = 'Semi-formal';
+    let registerRules = 'Uses recipient name (Dear [Name]), respectful but warm tone, minimal contractions, closing with Regards or Best regards.';
+    if (lower.includes('write a letter to your friend') || lower.includes('write a letter to a friend') || lower.includes('write a letter to your relative')) {
+      registerType = 'Informal';
+      registerRules = 'Uses first name (Hi [Name] / Dear [Name]), contractions allowed, warm and personal language, friendly closing (Best wishes / Take care / Love).';
+    } else if (
+      lower.includes('company') || lower.includes('organisation') || lower.includes('organization') ||
+      lower.includes('hotel') || lower.includes('transport') || lower.includes('gym') ||
+      lower.includes('provider') || lower.includes('manager') && !lower.includes('building manager')
+    ) {
+      registerType = 'Formal';
+      registerRules = 'No contractions, Dear Sir/Madam (unknown recipient) or Dear Mr/Ms [Surname] (known), Yours faithfully (Dear Sir/Madam) or Yours sincerely (named recipient), professional vocabulary throughout.';
+    }
+    return `${base}
+Task type: IELTS General Writing Task 1 (${registerType} Letter).
+Minimum word count: 150 words. Deduct at least one band from taskAchievement if under 150 words.
+Expected register: ${registerType}. ${registerRules}
+Scoring for taskAchievement (Task Achievement):
+  - ALL bullet points must be fully addressed and sufficiently developed. Any bullet point that is missing or only mentioned in passing = maximum band 5.
+  - Register must be consistently ${registerType} throughout the letter. Inconsistent or incorrect register reduces the band.
+  - Letter must have a clear purpose in the opening paragraph and an appropriate closing salutation.
+  - An essay-style response without letter format should NOT receive a high band.
+In overallFeedback: explicitly state (1) whether the register is correct and consistent, and (2) which bullet points, if any, are missing or underdeveloped.`;
+  }
+
+  if (taskKey === 't2') {
+    return `${base}
+Task type: IELTS Writing Task 2 (Essay).
+Minimum word count: 250 words. Deduct at least one band from taskAchievement if under 250 words.
+Scoring for taskAchievement (Task Response in IELTS Task 2 terminology):
+  - The essay must clearly address the specific task type stated in the prompt (Agree/Disagree, Discuss Both Views + Opinion, Advantages/Disadvantages Outweigh, Problem-Solution, Cause-Solution, Positive/Negative Development, etc.).
+  - Agree/Disagree: a clear, consistent position must be stated and supported throughout. A position that keeps shifting reduces the band.
+  - Discuss Both Views + Opinion: BOTH views must be presented before giving a personal opinion. Missing either view = maximum band 5.
+  - Outweigh essays: the writer must state whether advantages/benefits outweigh disadvantages/drawbacks and defend that position.
+  - Arguments must be fully extended and supported with specific reasons or examples — not just listed.
+  - No bullet-point lists, memorised templates, or off-topic content.`;
+  }
+
+  return base;
+};
+
+export const evaluateWriting = async (settings: AppSettings, prompt: string, text: string, taskKey = ''): Promise<WritingFeedback> => {
+  const exam = settings.primaryExam;
+  const scoringInstruction = buildScoringInstruction(exam, taskKey, prompt);
+
+  const systemInstruction = `You are an expert ${exam} English writing coach. Evaluate the user's writing based on the given prompt and task type.
+${scoringInstruction}
 Return your evaluation strictly as a JSON object matching this schema:
 {
   "score": number (0-100 overall score),
-  "bandScore": string (${exam === 'TOEIC' ? 'TOEIC scaled score, e.g. "160/200"' : 'IELTS band, e.g. "7.5"'}),
-  "overallFeedback": "string (Short overall feedback on the article)",
+  "bandScore": string (${exam === 'TOEIC' ? 'TOEIC scaled score, e.g. "160/200"' : 'IELTS band, e.g. "6.5"'}),
+  "overallFeedback": "string (2-3 sentences of overall feedback, including register and bullet-point coverage for letters)",
   "subScores": {
-    "taskAchievement": string (${exam === 'TOEIC' ? 'e.g. "82/100"' : 'e.g. "7.5"'}),
+    "taskAchievement": string (${exam === 'TOEIC' ? 'e.g. "82/100"' : 'IELTS band, e.g. "6.0"'}),
     "coherence": string,
     "lexicalResource": string,
     "grammar": string
   },
   "corrections": [
-    { "original": "string", "replacement": "string", "explanation": "string (briefly explain why it was added, modified, or deleted)" }
+    { "original": "string", "replacement": "string", "explanation": "string (briefly explain the error and the fix)" }
   ],
-  "improvementTips": ["string (Suggestions for improvement based on the target ${exam === 'TOEIC' ? 'TOEIC score' : 'band score'})"],
-  "improvedText": "string (a natural, high-scoring rewrite of the user's text)"
+  "improvementTips": ["string (3-5 specific, actionable tips based on the task type and the user's actual errors)"],
+  "improvedText": "string (a natural, high-scoring rewrite that matches the correct task format and register)"
 }`;
 
   const userContent = `Prompt/Topic: ${prompt}\n\nUser's Text:\n${text}`;
@@ -353,6 +413,229 @@ No markdown wrappers.`;
     }
   }
   return [];
+};
+
+// ── IELTS Speaking Part 1 ────────────────────────────────────────────────────
+
+/** Round a number to the nearest 0.5 (IELTS band rounding). */
+export const roundToNearestHalf = (value: number): number =>
+  Math.round(value * 2) / 2;
+
+export interface IeltsP1AnswerInput {
+  questionId: string;
+  question: string;
+  topicName: string;
+  transcript: string;
+  durationSeconds: number;
+}
+
+export interface IeltsP1DetectedIssue {
+  type: 'fluency' | 'vocabulary' | 'grammar' | 'pronunciation' | 'relevance' | 'structure' | 'coverage';
+  originalText?: string;
+  correctedText?: string;
+  message: string;
+}
+
+export interface IeltsP1PronunciationWord {
+  word: string;
+  issue?: string;
+}
+
+export interface IeltsP1CoachingInsight {
+  key: string;
+  label: string;
+  value?: string | number | boolean | null;
+  message?: string;
+}
+
+export interface IeltsP1CriterionResult {
+  estimatedBand: number | null;
+  strengths: string[];
+  issues: string[];
+  usefulAlternatives?: string[];
+  improvementTip?: string;
+}
+
+export interface IeltsP1QuestionResult {
+  questionId: string;
+  question: string;
+  topicName: string;
+  transcript: string;
+  durationSeconds: number;
+  quickScore: number | null;
+  detectedIssues: IeltsP1DetectedIssue[];
+  correctedTranscript: string;
+  improvedAnswer: string;
+  pronunciationWords: IeltsP1PronunciationWord[];
+}
+
+export interface IeltsP1SessionResult {
+  sessionTitle: string;
+  mode: string;
+  durationSeconds: number;
+  topicCount: number;
+  questionCount: number;
+  estimatedBand: number | null;
+  disclaimer: string;
+  criteria: {
+    fluencyCoherence: IeltsP1CriterionResult;
+    lexicalResource: IeltsP1CriterionResult;
+    grammaticalRangeAccuracy: IeltsP1CriterionResult;
+    pronunciation: IeltsP1CriterionResult;
+  };
+  coachingInsights: IeltsP1CoachingInsight[];
+  questionResults: IeltsP1QuestionResult[];
+  keyStrengths: string[];
+  priorityImprovements: string[];
+}
+
+export const evaluateIeltsP1Session = async (
+  settings: AppSettings,
+  answers: IeltsP1AnswerInput[],
+  durationSeconds: number,
+): Promise<IeltsP1SessionResult> => {
+  const qBlock = answers
+    .map(
+      (a, i) =>
+        `Q${i + 1} [${a.topicName}]: ${a.question}\nAnswer (${a.durationSeconds}s): ${a.transcript || '(no speech detected)'}`,
+    )
+    .join('\n\n');
+
+  const topicNames = [...new Set(answers.map((a) => a.topicName))];
+
+  const systemInstruction = `You are an expert IELTS Speaking examiner evaluating a Part 1 practice session.
+Score on the 4 official criteria: Fluency and Coherence, Lexical Resource, Grammatical Range and Accuracy, and Pronunciation.
+Each criterion band: 0–9 in 0.5 increments.
+estimatedBand = roundToNearestHalf((fc + lr + gra + p) / 4). Return null for any criterion where insufficient data exists.
+
+Return STRICT JSON — no markdown wrappers, no trailing commas:
+{
+  "sessionTitle": "IELTS Speaking Part 1 — Practice Session",
+  "estimatedBand": number | null,
+  "disclaimer": "This is an AI-generated estimate for practice purposes. It is not an official IELTS score.",
+  "keyStrengths": ["string"],
+  "priorityImprovements": ["string"],
+  "criteria": {
+    "fluencyCoherence": {
+      "estimatedBand": number | null,
+      "strengths": ["string"],
+      "issues": ["string"],
+      "improvementTip": "string"
+    },
+    "lexicalResource": {
+      "estimatedBand": number | null,
+      "strengths": ["string"],
+      "issues": ["string"],
+      "usefulAlternatives": ["string"],
+      "improvementTip": "string"
+    },
+    "grammaticalRangeAccuracy": {
+      "estimatedBand": number | null,
+      "strengths": ["string"],
+      "issues": ["string"],
+      "improvementTip": "string"
+    },
+    "pronunciation": {
+      "estimatedBand": number | null,
+      "strengths": ["string"],
+      "issues": ["string"],
+      "improvementTip": "string"
+    }
+  },
+  "coachingInsights": [
+    { "key": "answer_relevance",     "label": "Answer Relevance",     "value": "good|needs_work|poor", "message": "string" },
+    { "key": "answer_development",   "label": "Answer Development",   "value": "good|needs_work|poor", "message": "string" },
+    { "key": "long_pauses",          "label": "Long Pauses",          "value": number (count),         "message": "string" },
+    { "key": "repeated_vocabulary",  "label": "Repeated Vocabulary",  "value": ["word1","word2"],      "message": "string" },
+    { "key": "grammar_accuracy",     "label": "Grammar Accuracy",     "value": "good|needs_work|poor", "message": "string" }
+  ],
+  "questionResults": [
+    {
+      "questionId": "string",
+      "question": "string",
+      "topicName": "string",
+      "transcript": "string",
+      "durationSeconds": number,
+      "quickScore": number | null,
+      "detectedIssues": [
+        { "type": "fluency|vocabulary|grammar|pronunciation|relevance|structure|coverage", "originalText": "string?", "correctedText": "string?", "message": "string" }
+      ],
+      "correctedTranscript": "string (fix grammar/word-choice, keep meaning)",
+      "improvedAnswer": "string (natural band-7 reference answer)",
+      "pronunciationWords": [
+        { "word": "string", "issue": "string?" }
+      ]
+    }
+  ]
+}
+
+Band guidelines:
+- 9: Expert. Near-native fluency, wide vocabulary, precise grammar, clear pronunciation.
+- 8: Very good. Minor slips only, almost no impact on communication.
+- 7: Good. Some errors but communication is effective throughout.
+- 6: Competent. Noticeable errors; communication is maintained with some effort.
+- 5: Modest. Frequent errors; meaning sometimes unclear.
+- 4: Limited. Basic vocabulary and grammar; frequent breakdowns.
+- Below 4: Very limited or no speech detected.
+
+If a transcript is empty or "(no speech detected)": quickScore = null, add a "relevance" detectedIssue.
+Never fabricate a score when data is insufficient — use null.`;
+
+  const userContent = `Session duration: ${durationSeconds}s\nTopics: ${topicNames.join(', ')}\nQuestion count: ${answers.length}\n\n${qBlock}\n\nReturn the full JSON evaluation.`;
+
+  try {
+    const raw = await callAI(settings, systemInstruction, userContent);
+    const parsed: IeltsP1SessionResult = JSON.parse(raw);
+
+    // Enforce rounding on all bands (AI may return un-rounded values)
+    const roundBand = (b: number | null) => b != null ? roundToNearestHalf(b) : null;
+    if (parsed.estimatedBand != null) parsed.estimatedBand = roundBand(parsed.estimatedBand);
+    for (const key of ['fluencyCoherence', 'lexicalResource', 'grammaticalRangeAccuracy', 'pronunciation'] as const) {
+      if (parsed.criteria[key]) {
+        parsed.criteria[key].estimatedBand = roundBand(parsed.criteria[key].estimatedBand);
+      }
+    }
+
+    // Re-compute estimatedBand from criteria (authoritative formula) if all criteria present
+    const bands = [
+      parsed.criteria.fluencyCoherence?.estimatedBand,
+      parsed.criteria.lexicalResource?.estimatedBand,
+      parsed.criteria.grammaticalRangeAccuracy?.estimatedBand,
+      parsed.criteria.pronunciation?.estimatedBand,
+    ];
+    if (bands.every((b): b is number => b != null)) {
+      parsed.estimatedBand = roundToNearestHalf(
+        (bands[0] + bands[1] + bands[2] + bands[3]) / 4,
+      );
+    } else {
+      parsed.estimatedBand = null;
+    }
+
+    // Guarantee disclaimer is always present
+    parsed.disclaimer =
+      'This is an AI-generated estimate for practice purposes. It is not an official IELTS score.';
+
+    // Attach original answer fields (AI may echo stale values)
+    parsed.questionResults = (parsed.questionResults ?? []).map((qr, i) => ({
+      ...qr,
+      questionId: answers[i]?.questionId ?? qr.questionId,
+      topicName: answers[i]?.topicName ?? qr.topicName,
+      transcript: answers[i]?.transcript ?? qr.transcript,
+      durationSeconds: answers[i]?.durationSeconds ?? qr.durationSeconds,
+      detectedIssues: qr.detectedIssues ?? [],
+      pronunciationWords: qr.pronunciationWords ?? [],
+    }));
+
+    parsed.durationSeconds = durationSeconds;
+    parsed.topicCount = topicNames.length;
+    parsed.questionCount = answers.length;
+    parsed.coachingInsights = parsed.coachingInsights ?? [];
+
+    return parsed;
+  } catch (e) {
+    console.error('Failed to parse IELTS P1 session result:', e);
+    throw new Error('Invalid response from AI.', { cause: e });
+  }
 };
 
 export class UnifiedChatSession {

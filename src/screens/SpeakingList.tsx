@@ -32,9 +32,7 @@ const SPEAKING_TASKS: Record<Exam, { blurb: string; tasks: TaskDef[] }> = {
   IELTS: {
     blurb: '3 parts. Scored by band (0–9) on Fluency, Lexical Resource, Grammar & Pronunciation.',
     tasks: [
-      { key: 'p1', label: 'Part 1 · Interview',  q: '4–5 min',   icon: <UserRound className="w-4 h-4" />,           section: 'Part 1 - Introduction and Interview' },
-      { key: 'p2', label: 'Part 2 · Long Turn',   q: 'Cue card',  icon: <RectangleEllipsis className="w-4 h-4" />,   section: 'Part 2 - Cue Card' },
-      { key: 'p3', label: 'Part 3 · Discussion',  q: '4–5 min',   icon: <MessagesSquare className="w-4 h-4" />,      section: 'Part 3 - Discussion' },
+      { key: 'p1', label: 'Part 1 · Interview', q: '4–5 min', icon: <UserRound className="w-4 h-4" />, section: 'Part 1 - Introduction and Interview' },
     ],
   },
 };
@@ -124,6 +122,10 @@ const SpeakingList = () => {
                     navigate('/speaking/picture');
                     return;
                   }
+                  if (t.key === 'p1') {
+                    navigate('/speaking/ielts-p1');
+                    return;
+                  }
                   setActiveTaskKey(t.key);
                 }}
                 className={cn(
@@ -158,6 +160,10 @@ const SpeakingList = () => {
               role="button"
               tabIndex={0}
               onClick={() => {
+                if (activeTaskKey === 'p1') {
+                  navigate('/speaking/ielts-p1', { state: { selectedTopic: practice.title } });
+                  return;
+                }
                 const state = { practice, exam: activeExam, taskKey: activeTaskKey, taskLabel: activeTask.label };
                 const route = activeTaskKey === 'pic' ? '/speaking/picture' : '/speaking/record';
                 navigate(route, { state });
@@ -165,6 +171,10 @@ const SpeakingList = () => {
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
+                  if (activeTaskKey === 'p1') {
+                    navigate('/speaking/ielts-p1', { state: { selectedTopic: practice.title } });
+                    return;
+                  }
                   const state = { practice, exam: activeExam, taskKey: activeTaskKey, taskLabel: activeTask.label };
                   const route = activeTaskKey === 'pic' ? '/speaking/picture' : '/speaking/record';
                   navigate(route, { state });
@@ -200,6 +210,10 @@ const SpeakingList = () => {
               <button
                 onClick={(event) => {
                   event.stopPropagation();
+                  if (activeTaskKey === 'p1') {
+                    navigate('/speaking/ielts-p1', { state: { selectedTopic: practice.title } });
+                    return;
+                  }
                   const state = { practice, exam: activeExam, taskKey: activeTaskKey, taskLabel: activeTask.label };
                   const route = activeTaskKey === 'pic' ? '/speaking/picture' : '/speaking/record';
                   navigate(route, { state });
