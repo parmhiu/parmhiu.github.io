@@ -64,8 +64,10 @@ const MODELS_BY_PROVIDER: Record<AIProvider, { id: string; label: string }[]> = 
     { id: 'gpt-4o-mini', label: 'gpt-4o-mini' },
   ],
   deepseek: [
-    { id: 'deepseek-chat', label: 'deepseek-chat (V3 · latest)' },
-    { id: 'deepseek-reasoner', label: 'deepseek-reasoner (R1)' },
+    { id: 'deepseek-chat', label: 'deepseek-chat' },
+    { id: 'deepseek-v4-flash', label: 'deepseek-v4-flash' },
+    { id: 'deepseek-v4-pro', label: 'deepseek-v4-pro' },
+    { id: 'deepseek-reasoner', label: 'deepseek-reasoner' },
   ],
   grok: [
     { id: 'grok-4', label: 'grok-4 (latest)' },
