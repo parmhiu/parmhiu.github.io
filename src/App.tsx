@@ -5,8 +5,6 @@ import { SettingsProvider } from './components/SettingsContext';
 import { ToastProvider } from './components/ToastContext';
 import { Layout } from './components/Layout';
 import { SplashScreen } from './components/SplashScreen';
-
-// Screens
 import Dashboard from './screens/Dashboard';
 import SpeakingList from './screens/SpeakingList';
 import SpeakingRecording from './screens/SpeakingRecording';

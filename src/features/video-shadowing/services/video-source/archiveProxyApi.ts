@@ -1,11 +1,3 @@
-// Talks to the local Archive proxy (server/archive-proxy.mjs) to turn a live
-// Internet Archive identifier into a ready-to-shadow lesson: the proxy does the
-// one CORS-blocked step (fetch + parse the caption track) and returns timed
-// segments; the video itself still streams straight from archive.org.
-//
-// The resulting lesson is persisted into the same local stores curated/uploaded
-// lessons use, so the existing practice/session/scoring pipeline runs unchanged.
-
 import { lessonRepo, segmentRepo } from '../storage/videoShadowingRepository';
 import { normalizeForCompare } from '../../utils/textNormalizer';
 import type { VideoShadowingLesson, LessonLevel } from '../../models/lesson';
