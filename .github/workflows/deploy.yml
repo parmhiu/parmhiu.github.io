@@ -36,6 +36,10 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Set in repo Settings → Secrets → VITE_ARCHIVE_PROXY
+          # Value: the Cloudflare Worker URL, e.g. https://archive-proxy.you.workers.dev
+          VITE_ARCHIVE_PROXY: ${{ secrets.VITE_ARCHIVE_PROXY }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
