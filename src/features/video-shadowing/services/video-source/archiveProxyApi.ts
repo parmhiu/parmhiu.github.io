@@ -27,7 +27,15 @@ interface ProxyLesson {
   segments: ProxySegment[];
 }
 
-export class ArchiveProxyError extends Error {}
+export class ArchiveProxyError extends Error {
+  /** True when the item itself can't be shadowed (no usable caption track),
+   *  as opposed to a connectivity/server failure. Lets the UI hide that item. */
+  noCaptions: boolean;
+  constructor(message: string, noCaptions = false) {
+    super(message);
+    this.noCaptions = noCaptions;
+  }
+}
 
 /** Returns true if the local Archive proxy service is reachable. */
 export async function checkProxyAvailable(): Promise<boolean> {
@@ -88,7 +96,7 @@ export async function prepareArchiveLesson(
 ): Promise<PreparedArchiveLesson> {
   const data = await fetchArchiveLesson(identifier, signal);
   if (!data.hasCaptions || data.segments.length === 0) {
-    throw new ArchiveProxyError('This item has no caption track, so it can’t be split into shadowing segments.');
+    throw new ArchiveProxyError('This item has no caption track, so it can’t be split into shadowing segments.', true);
   }
 
   const lessonId = `archive-${data.identifier}`;
