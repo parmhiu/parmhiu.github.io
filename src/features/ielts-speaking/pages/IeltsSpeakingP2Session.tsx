@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -27,6 +27,9 @@ type Phase = 'prep' | 'long_turn' | 'rounding_off' | 'complete';
 
 const PREP_SECONDS = 60;
 const MAX_LONG_TURN_SECONDS = 120;
+const PREP_NOTICE_SECONDS = 40;   // amber — first gentle nudge
+const PREP_CAUTION_SECONDS = 20;  // orange — time getting short
+const PREP_WARNING_SECONDS = 10;  // red + shake + tick — urgent
 const PART2_CATEGORIES = Array.from(new Set(PART2_CUE_CARDS.map((card) => card.category)));
 
 const IeltsSpeakingP2Session = () => {
@@ -55,6 +58,37 @@ const IeltsSpeakingP2Session = () => {
   const liveText = speech.transcript + (speech.interimTranscript ? ` ${speech.interimTranscript}` : '');
   const currentFollowUp = cueCard.roundingOffQuestions[roundingIndex];
 
+  // Countdown beeps synthesised on the fly so the warning needs no audio asset.
+  // Reuses a single AudioContext for the lifetime of the session.
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const playTone = useCallback((frequency: number, duration: number, peak = 0.16) => {
+    try {
+      const AudioCtor =
+        window.AudioContext ??
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtor) return;
+      if (!audioCtxRef.current) audioCtxRef.current = new AudioCtor();
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') void ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(peak, ctx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration + 0.02);
+    } catch {
+      /* Web Audio unavailable — skip the beep silently. */
+    }
+  }, []);
+  // Short high tick on each of the final seconds.
+  const playTick = useCallback(() => playTone(880, 0.12), [playTone]);
+  // Longer, lower "beeep" when preparation time runs out.
+  const playEndBeep = useCallback(() => playTone(440, 0.7, 0.22), [playTone]);
+
   useEffect(() => {
     if (!selectedId) return;
     if (phase !== 'prep') return;
@@ -62,6 +96,29 @@ const IeltsSpeakingP2Session = () => {
     const timer = setTimeout(() => setPrepLeft((value) => value - 1), 1000);
     return () => clearTimeout(timer);
   }, [selectedId, phase, prepLeft]);
+
+  // Tick on each of the final seconds, then a longer beep when time runs out.
+  useEffect(() => {
+    if (phase !== 'prep') return;
+    if (prepLeft > 0 && prepLeft <= PREP_WARNING_SECONDS) playTick();
+    else if (prepLeft === 0) playEndBeep();
+  }, [phase, prepLeft, playTick, playEndBeep]);
+
+  const startLongTurn = useCallback(() => {
+    reader.stop();
+    speech.reset();
+    setSpeakingSeconds(0);
+    answerStartRef.current = Date.now();
+    setPhase('long_turn');
+    speech.start();
+  }, [reader, speech]);
+
+  // Auto-transition to speaking phase when prep countdown ends.
+  useEffect(() => {
+    if (phase !== 'prep' || prepLeft !== 0 || !selectedId) return;
+    const t = setTimeout(() => startLongTurn(), 800);
+    return () => clearTimeout(t);
+  }, [phase, prepLeft, selectedId, startLongTurn]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -100,16 +157,8 @@ const IeltsSpeakingP2Session = () => {
   useEffect(() => () => {
     speech.stop();
     reader.stop();
+    void audioCtxRef.current?.close();
   }, []);
-
-  const startLongTurn = () => {
-    reader.stop();
-    speech.reset();
-    setSpeakingSeconds(0);
-    answerStartRef.current = Date.now();
-    setPhase('long_turn');
-    speech.start();
-  };
 
   const finishLongTurn = () => {
     speech.stop();
@@ -232,6 +281,12 @@ const IeltsSpeakingP2Session = () => {
 
   const prepProgress = ((PREP_SECONDS - prepLeft) / PREP_SECONDS) * 100;
   const speakingProgress = (speakingSeconds / MAX_LONG_TURN_SECONDS) * 100;
+  const prepUrgent  = phase === 'prep' && prepLeft > 0 && prepLeft <= PREP_WARNING_SECONDS;
+  const prepCaution = phase === 'prep' && prepLeft > PREP_WARNING_SECONDS && prepLeft <= PREP_CAUTION_SECONDS;
+  const prepNotice  = phase === 'prep' && prepLeft > PREP_CAUTION_SECONDS && prepLeft <= PREP_NOTICE_SECONDS;
+  const speakingRemaining = MAX_LONG_TURN_SECONDS - speakingSeconds;
+  const speakingUrgent  = speakingRemaining > 0 && speakingRemaining <= 10;
+  const speakingCaution = speakingRemaining > 10 && speakingRemaining <= 30;
 
   return (
     <div className="max-w-6xl mx-auto min-h-[calc(100vh-8rem)] animate-in fade-in duration-300">
@@ -262,7 +317,10 @@ const IeltsSpeakingP2Session = () => {
                     cx="40"
                     cy="40"
                     r={34}
-                    className="stroke-cyan-500"
+                    className={cn(
+                      'transition-colors duration-300',
+                      prepUrgent ? 'stroke-red-500' : prepCaution ? 'stroke-orange-500' : prepNotice ? 'stroke-amber-500' : 'stroke-cyan-500',
+                    )}
                     strokeWidth="7"
                     strokeLinecap="round"
                     fill="none"
@@ -271,7 +329,19 @@ const IeltsSpeakingP2Session = () => {
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-2xl font-black tabular-nums text-slate-800 dark:text-slate-100">
+                  <span
+                    key={prepUrgent ? prepLeft : 'calm'}
+                    className={cn(
+                      'text-2xl font-black tabular-nums transition-colors duration-300',
+                      prepUrgent
+                        ? 'text-red-500 animate-timer-shake'
+                        : prepCaution
+                          ? 'text-orange-500'
+                          : prepNotice
+                            ? 'text-amber-500'
+                            : 'text-slate-800 dark:text-slate-100',
+                    )}
+                  >
                     0:{String(prepLeft).padStart(2, '0')}
                   </span>
                 </div>
@@ -390,8 +460,20 @@ const IeltsSpeakingP2Session = () => {
             <div className="flex items-end justify-between mb-3">
               <div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Speaking time</p>
-                <p className="text-4xl font-black tabular-nums text-slate-800 dark:text-slate-100 leading-none mt-1">
-                  {Math.floor(speakingSeconds / 60)}:{String(speakingSeconds % 60).padStart(2, '0')}
+                <p className={cn(
+                  'text-4xl font-black tabular-nums leading-none mt-1 transition-colors duration-300',
+                  speakingUrgent
+                    ? 'text-red-500'
+                    : speakingCaution
+                      ? 'text-amber-500'
+                      : 'text-slate-800 dark:text-slate-100',
+                )}>
+                  <span
+                    key={speakingUrgent ? speakingSeconds : speakingCaution ? 'caution' : 'calm'}
+                    className={cn(speakingUrgent && 'animate-timer-shake')}
+                  >
+                    {Math.floor(speakingSeconds / 60)}:{String(speakingSeconds % 60).padStart(2, '0')}
+                  </span>
                 </p>
               </div>
               <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs font-bold border border-red-100 dark:border-red-900/30">

@@ -1,3 +1,11 @@
+// Talks to the local Archive proxy (server/archive-proxy.mjs) to turn a live
+// Internet Archive identifier into a ready-to-shadow lesson: the proxy does the
+// one CORS-blocked step (fetch + parse the caption track) and returns timed
+// segments; the video itself still streams straight from archive.org.
+//
+// The resulting lesson is persisted into the same local stores curated/uploaded
+// lessons use, so the existing practice/session/scoring pipeline runs unchanged.
+
 import { lessonRepo, segmentRepo } from '../storage/videoShadowingRepository';
 import { normalizeForCompare } from '../../utils/textNormalizer';
 import type { VideoShadowingLesson, LessonLevel } from '../../models/lesson';
@@ -27,15 +35,7 @@ interface ProxyLesson {
   segments: ProxySegment[];
 }
 
-export class ArchiveProxyError extends Error {
-  /** True when the item itself can't be shadowed (no usable caption track),
-   *  as opposed to a connectivity/server failure. Lets the UI hide that item. */
-  noCaptions: boolean;
-  constructor(message: string, noCaptions = false) {
-    super(message);
-    this.noCaptions = noCaptions;
-  }
-}
+export class ArchiveProxyError extends Error {}
 
 /** Returns true if the local Archive proxy service is reachable. */
 export async function checkProxyAvailable(): Promise<boolean> {
@@ -96,7 +96,7 @@ export async function prepareArchiveLesson(
 ): Promise<PreparedArchiveLesson> {
   const data = await fetchArchiveLesson(identifier, signal);
   if (!data.hasCaptions || data.segments.length === 0) {
-    throw new ArchiveProxyError('This item has no caption track, so it can’t be split into shadowing segments.', true);
+    throw new ArchiveProxyError('This item has no caption track, so it can’t be split into shadowing segments.');
   }
 
   const lessonId = `archive-${data.identifier}`;

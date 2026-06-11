@@ -12,6 +12,8 @@
     "test:watch": "vitest",
     "curate:archive": "node scripts/curate-archive-lessons.mjs",
     "proxy": "node ../server/archive-proxy.mjs",
+    "proxy:dev": "wrangler dev -c ../server/wrangler.jsonc",
+    "proxy:deploy": "wrangler deploy -c ../server/wrangler.jsonc",
     "preview": "npm run build && wrangler dev",
     "fetch:voa": "node scripts/fetch-voa-lessons.mjs",
     "postinstall": "node scripts/copy-ffmpeg-core.mjs",

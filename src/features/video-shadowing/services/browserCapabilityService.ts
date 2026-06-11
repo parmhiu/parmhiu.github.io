@@ -1,3 +1,6 @@
+// Detects what the current browser supports for local video processing.
+// Pure detection — no heavy libraries loaded here.
+
 import type { BrowserCapabilities, TranscriptionBackend } from '../models/browserCapabilities';
 import { estimateStorage } from './storage/storageQuotaService';
 

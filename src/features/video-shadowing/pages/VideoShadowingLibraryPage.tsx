@@ -74,9 +74,6 @@ export default function VideoShadowingLibraryPage() {
   // into segments (the one CORS-blocked step), we persist it locally, then jump
   // straight into the practice screen — full per-segment shadowing.
   const [preparingId, setPreparingId] = useState<string | null>(null);
-  // Items that turned out to lack a usable caption track — hidden from the grid
-  // so they don't reappear as un-shadowable cards.
-  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const openItem = async (item: ArchiveLibraryItem) => {
     if (preparingId) return;
     setPreparingId(item.identifier);
@@ -84,9 +81,6 @@ export default function VideoShadowingLibraryPage() {
       const { lessonId } = await prepareArchiveLesson(item.identifier);
       navigate(`/video-shadowing/lessons/${lessonId}/practice`);
     } catch (err) {
-      if (err instanceof ArchiveProxyError && err.noCaptions) {
-        setHiddenIds((prev) => new Set(prev).add(item.identifier));
-      }
       toast.error(err instanceof ArchiveProxyError ? err.message : 'Could not load this video.');
       setPreparingId(null);
     }
@@ -97,10 +91,8 @@ export default function VideoShadowingLibraryPage() {
     toast.success('Lesson deleted and local files cleaned up.');
   };
 
-  // Filter the live list by the auto-estimated CEFR level, dropping any item we
-  // already found to be un-shadowable (no caption track).
-  const visibleItems = items.filter((i) => !hiddenIds.has(i.identifier));
-  const filteredItems = level === 'All levels' ? visibleItems : visibleItems.filter((i) => i.level === level);
+  // Filter the live list by the auto-estimated CEFR level.
+  const filteredItems = level === 'All levels' ? items : items.filter((i) => i.level === level);
 
   return (
     <div>
